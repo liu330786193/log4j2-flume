@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j2:configuration>
+<!-- log4j2 配置文件 -->
+<configuration name="log4j2Conf" status="INFO" monitorInterval="60">
+	<properties>  
+		<property name="log.path" value="./logs" />
+		<property name="log.encoding" value="UTF-8" />
+		<property name="log.level" value="INFO" />
+		<property name="appName" value="cat-agent" />
+	</properties> 
+
+	<Appenders>
+
+		<Flume name="eventLogger" compress="false">
+			<Agent host="47.104.234.248" port="44444" />
+			<RFC5424Layout enterpriseNumber="18060" includeMDC="true" appName="MyApp" />
+		</Flume>
+		<!-- 默认 Appender -->
+		<RollingFile name="DEFAULT-APPENDER" fileName="${log.path}/default.log"
+			filePattern="${log.path}/default-%d{yyyy-MM-dd}.log">
+			<PatternLayout charset="${log.encoding}" pattern="%d %-5p %c{2} - %m %X{TimeKey}%n" />
+			<Policies>
+				<TimeBasedTriggeringPolicy modulate="true" interval="1" />
+			</Policies>
+			<DefaultRolloverStrategy>
+				<Delete basePath="${log.path}" maxDepth="1">
+					<IfFileName glob="default-*.log" />
+					<IfLastModified age="7d" />
+				</Delete>
+			</DefaultRolloverStrategy>
+		</RollingFile>
+
+		<!-- 异常日志 Appender -->
+		<RollingFile name="SYS-ERROR-APPENDER" fileName="${log.path}/error.log"
+			filePattern="${log.path}/error-%d{yyyy-MM-dd}.log">
+			<PatternLayout charset="${log.encoding}" pattern="%d %-5p %c{2} - %m %X{TimeKey}%n" />
+			<ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+			<Policies>
+				<TimeBasedTriggeringPolicy modulate="true" interval="1" />
+			</Policies>
+			<DefaultRolloverStrategy>
+				<Delete basePath="${log.path}" maxDepth="1">
+					<IfFileName glob="error-*.log" />
+					<IfLastModified age="7d" />
+				</Delete>
+			</DefaultRolloverStrategy>
+		</RollingFile>
+
+		<!--         这个输出控制台的配置 -->
+		<Console name="Console" target="SYSTEM_OUT">
+			<!--             控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch） -->
+			<ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+			<!--             这个都知道是输出日志的格式 -->
+			<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %class{36} %L %M - %msg%xEx%n"/>
+		</Console>
+	</Appenders>
+
+	<Loggers>
+		<Root level="INFO">
+			<AppenderRef ref="eventLogger" />
+			<appender-ref ref="DEFAULT-APPENDER" />
+			<appender-ref ref="SYS-ERROR-APPENDER" />
+			<appender-ref ref="Console" />
+		</Root>
+	</Loggers>
+</configuration>
